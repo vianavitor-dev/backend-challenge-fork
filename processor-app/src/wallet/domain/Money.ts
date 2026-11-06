@@ -13,6 +13,23 @@ class Money {
 
   static from(props: MoneyProps): Money {
     const { amount, currency } = props;
+
+    if (amount === undefined || currency === undefined) {
+      throw new Error("Amount and currency must be defined");
+    }
+    
+    if (typeof amount !== "string" || typeof currency !== "string") {
+      throw new Error("Amount and currency must be strings");
+    }
+
+    if (!/^\d+(\.\d{1,2})?$/.test(amount)) {
+      throw new Error("Amount must be a valid decimal string with up to two decimal places");
+    }
+
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new Error("Currency must be a valid ISO-4217 currency code");
+    }
+
     return new Money(new Decimal(amount), currency);
   }
 
