@@ -26,21 +26,38 @@ class Money {
       throw new Error("Amount must be a valid decimal string with up to two decimal places");
     }
 
-    if (!/^[A-Z]{3}$/.test(currency)) {
-      throw new Error("Currency must be a valid ISO-4217 currency code");
+    if (currency !== "BRL") {
+      throw new Error("Only BRL currency is supported");
     }
 
     return new Money(new Decimal(amount), currency);
   }
 
   static zero(currency: string): Money {
+    if (currency !== "BRL") {
+      throw new Error("Only BRL currency is supported");
+    }
+
     return new Money(new Decimal(0), currency);
   }
 
   add(other: Money): Money {
+    this.assertSameCurrency(other);
+
+    if (other.value.isNegative()) {
+      throw new Error("Cannot add a negative amount");
+    }
+
     return new Money(this.value.plus(other.value), this.currency);
   }
+
   subtract(other: Money): Money {
+    this.assertSameCurrency(other);
+
+    if (other.value.isNegative()) {
+      throw new Error("Cannot subtract a negative amount");
+    }
+
     return new Money(this.value.minus(other.value), this.currency);
   }
   negate(): Money {
@@ -60,6 +77,8 @@ class Money {
   }
 
   isLessThan(other: Money): boolean {
+    this.assertSameCurrency(other);
+
     return this.value.lessThan(other.value);
   }
 
@@ -83,3 +102,6 @@ class Money {
     }
   }
 }
+
+export { Money };
+export type { MoneyProps };
