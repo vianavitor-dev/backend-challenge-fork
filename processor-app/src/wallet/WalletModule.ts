@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Inject, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AppDataSource } from '../database/data-source.js';
 import {
@@ -29,4 +29,10 @@ import { WalletService } from './WalletService.js';
     WalletService,
   ],
 })
-export class WalletModule {}
+export class WalletModule implements OnApplicationShutdown {
+  constructor(@Inject(DataSource) private readonly dataSource: DataSource) {}
+
+  async onApplicationShutdown(): Promise<void> {
+    if (this.dataSource.isInitialized) await this.dataSource.destroy();
+  }
+}

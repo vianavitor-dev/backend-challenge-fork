@@ -12,6 +12,8 @@ interface WalletState {
 }
 
 export class Wallet {
+  private readonly _previousVersion: number;
+
   private constructor(
     public readonly id: string,
     public readonly playerId: string,
@@ -20,7 +22,9 @@ export class Wallet {
     private _version: number,
     public readonly createdAt: Date,
     private _updatedAt: Date,
-  ) {}
+  ) {
+    this._previousVersion = _version;
+  }
 
   static open(props: {
     id: string;
@@ -29,8 +33,8 @@ export class Wallet {
   }): Wallet {
     const { id, playerId, initialBalance } = props;
 
-    if (initialBalance.isLessThan(Money.zero(initialBalance.currency))) {
-      throw new Error("Initial balance cannot be less than zero");
+    if (initialBalance.isNegative()) {
+      throw new Error('Initial balance cannot be less than zero');
     }
 
     return new Wallet(
@@ -38,7 +42,7 @@ export class Wallet {
       playerId,
       initialBalance.currency,
       initialBalance,
-      initialBalance.isZero() ? 0 : 1,
+      1,
       new Date(),
       new Date(),
     );
@@ -46,7 +50,8 @@ export class Wallet {
 
   /** Reconstrução a partir da persistência — não revalida transições. */
   static rehydrate(state: WalletState): Wallet {
-    const { id, playerId, currency, balance, version, createdAt, updatedAt } = state;
+    const { id, playerId, currency, balance, version, createdAt, updatedAt } =
+      state;
     return new Wallet(
       id,
       playerId,
@@ -58,42 +63,53 @@ export class Wallet {
     );
   }
 
-  get balance(): Money { return this._balance; }
-  get version(): number { return this._version; }
-  get updatedAt(): Date { return this._updatedAt; }
+  get previousVersion(): number {
+    return this._previousVersion;
+  }
+  get balance(): Money {
+    return this._balance;
+  }
+  get version(): number {
+    return this._version;
+  }
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
-  // Aplicam a movimentação mantendo saldo e ledger consistentes entre si.
-  // Assinatura e retorno são decisão sua.
-  // Retorno não é necessário
+  // Alteram apenas o domínio. A persistência de saldo e ledger deve ser atômica.
   debit(amount: Money): void {
     this.assertSameCurrency(amount);
     if (amount.isNegative()) {
-      throw new Error("Cannot debit a negative amount");
+      throw new Error('Cannot debit a negative amount');
     }
 
     if (this._balance.isLessThan(amount)) {
-      throw new Error("Insufficient balance");
+      throw new Error('Insufficient balance');
     }
 
+    if (amount.isZero()) return;
     this._balance = this._balance.subtract(amount);
-    // this._version += 1;
+    this._version += 1;
     this._updatedAt = new Date();
   }
 
   credit(amount: Money): void {
     this.assertSameCurrency(amount);
     if (amount.isNegative()) {
-      throw new Error("Cannot credit a negative amount");
+      throw new Error('Cannot credit a negative amount');
     }
 
+    if (amount.isZero()) return;
     this._balance = this._balance.add(amount);
-    // this._version += 1;
+    this._version += 1;
     this._updatedAt = new Date();
   }
 
   private assertSameCurrency(money: Money): void {
     if (this.currency !== money.currency) {
-      throw new Error(`Currency mismatch: wallet is ${this.currency}, but money is ${money.currency}`);
+      throw new Error(
+        `Currency mismatch: wallet is ${this.currency}, but money is ${money.currency}`,
+      );
     }
   }
 }

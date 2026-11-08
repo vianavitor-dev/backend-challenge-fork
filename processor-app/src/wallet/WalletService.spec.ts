@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Money } from './domain/Money.js';
 import { Wallet } from './domain/Wallet.js';
@@ -5,11 +6,10 @@ import type { WalletRepository } from './repositories/WalletRepository.js';
 import { WalletService } from './WalletService.js';
 
 describe('WalletService', () => {
-  const createWallet = vi.fn(async (wallet: Wallet) => wallet);
-  const findWalletById = vi.fn(
+  const createWallet = mock(async (wallet: Wallet) => wallet);
+  const findWalletById = mock(
     async (_id: string): Promise<Wallet | null> => null,
   );
-  const saveWallet = vi.fn(async (wallet: Wallet) => wallet);
   let walletRepository: WalletRepository;
   let walletService: WalletService;
 
@@ -17,11 +17,9 @@ describe('WalletService', () => {
     createWallet.mockClear();
     findWalletById.mockClear();
     findWalletById.mockResolvedValue(null);
-    saveWallet.mockClear();
     walletRepository = {
       create: createWallet,
       findById: findWalletById,
-      save: saveWallet,
     };
     walletService = new WalletService(walletRepository);
   });

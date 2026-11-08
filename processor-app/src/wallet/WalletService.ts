@@ -24,6 +24,7 @@ export class WalletService {
       !this.isRecord(input) ||
       typeof input.playerId !== 'string' ||
       input.playerId.trim().length === 0 ||
+      input.playerId.length > 255 ||
       !this.isRecord(input.initialBalance) ||
       typeof input.initialBalance.amount !== 'string' ||
       typeof input.initialBalance.currency !== 'string'

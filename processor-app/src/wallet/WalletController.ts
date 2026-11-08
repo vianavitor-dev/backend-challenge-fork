@@ -1,10 +1,20 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import { Wallet } from './domain/Wallet.js';
 import { WalletService } from './WalletService.js';
 
 @Controller('wallets')
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+  constructor(
+    @Inject(WalletService) private readonly walletService: WalletService,
+  ) {}
 
   @Post()
   async create(@Body() body: unknown): Promise<WalletResponse> {
@@ -13,7 +23,7 @@ export class WalletController {
 
   @Get(':walletId')
   async findById(
-    @Param('walletId') walletId: string,
+    @Param('walletId', new ParseUUIDPipe()) walletId: string,
   ): Promise<WalletResponse> {
     return this.toResponse(await this.walletService.findById(walletId));
   }
